@@ -57,7 +57,7 @@ class _HomeScreenState extends State<HomeScreen> {
             trailing: Checkbox(
               onChanged: (value){
                 note.status = value! ? 1 : 0;
-                DatabaseHelper.instance.updateNote(note);
+                _databaseHelper.updateNote(note);
                 _updateNoteList();
                 Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => HomeScreen()));
               },
@@ -65,8 +65,8 @@ class _HomeScreenState extends State<HomeScreen> {
               value: note.status == 1 ? true : false,
             ),
             onTap: () => Navigator.push(context, CupertinoPageRoute(builder: (_) => AddNoteScreen(
-              // updateNoteList: _updateNoteList(),
-              // note: note,
+              updateNoteList: _updateNoteList(),
+              note: note,
             ),
             ),
             ),
@@ -85,7 +85,7 @@ class _HomeScreenState extends State<HomeScreen> {
         backgroundColor: Theme.of(context).primaryColor,
         onPressed: (){
           Navigator.push(context, CupertinoPageRoute(builder: (_) => AddNoteScreen(
-            // updateNoteList: _updateNoteList,
+            updateNoteList: _updateNoteList,
           ),));
         },
         child: Icon(Icons.add),

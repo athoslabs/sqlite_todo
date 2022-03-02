@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:sqlite_todo/database/database.dart';
+import 'package:sqlite_todo/models/note_model.dart';
 import 'package:sqlite_todo/screens/home_screen.dart';
 
 class AddNoteScreen extends StatefulWidget {
-  const AddNoteScreen({Key? key}) : super(key: key);
+  final Note? note;
+  final Function? updateNoteList;
+
+  AddNoteScreen({this.note, this.updateNoteList});
 
   @override
   State<AddNoteScreen> createState() => _AddNoteScreenState();
@@ -22,7 +27,37 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
 
   final DateFormat _dateFormatter = DateFormat('MMM dd, yyyy');
   final List<String> _priorities = ['Low', 'Medium', 'High'];
-  
+
+  @override
+  void initState() {
+    super.initState();
+
+    if(widget.note != null) {
+      _title = widget.note!.title!;
+      _date = widget.note!.date!;
+      _priority = widget.note!.priority!;
+
+      setState(() {
+        btnText = 'Update Note';
+        titleText = 'Update Note';
+      });
+    } else {
+      setState(() {
+        btnText = 'Add Note';
+        titleText = 'Add Note';
+      });
+    }
+
+    _dateController.text = _dateFormatter.format(_date);
+  }
+
+  @override
+  void dispose() {
+    _dateController.dispose();
+    super.dispose();
+  }
+
+
   _handleDatePicker() async {
     final DateTime? date = await showDatePicker(
         context: context,
@@ -39,7 +74,35 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
   }
 
   _submit() {
+    if (_formKey.currentState!.validate()) {
+      _formKey.currentState!.save();
+      print('$_title, $_date, $_priority');
 
+      Note note = Note(title: _title, date: _date, priority: _priority);
+
+      if (widget.note == null) {
+        note.status = 0;
+        DatabaseHelper.instance.insertNote(note);
+
+        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => HomeScreen(),));
+      } else {
+        note.id = widget.note!.id;
+        note.status = widget.note!.status;
+        DatabaseHelper.instance.updateNote(note);
+
+        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => HomeScreen(),));
+      }
+
+      widget.updateNoteList!();
+    }
+  }
+
+  _delete() {
+    DatabaseHelper.instance.deleteNote(widget.note!.id!);
+
+    Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => HomeScreen(),),);
+
+    widget.updateNoteList!();
   }
   
 
@@ -166,6 +229,25 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
                           onPressed: _submit,
                         ),
                       ),
+                      widget.note != null ? Container(
+                        margin: EdgeInsets.symmetric(vertical: 20.0),
+                        height: 60.0,
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).primaryColor,
+                          borderRadius: BorderRadius.circular(30.0),
+                        ),
+                        child: ElevatedButton(
+                          child: Text('Delete Note',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 20.0,
+
+                          ),
+                          ),
+                          onPressed: _delete,
+                        ),
+                      ) : SizedBox.shrink(),
                     ],
                   ),
                 )
